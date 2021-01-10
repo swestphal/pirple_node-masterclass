@@ -132,6 +132,10 @@ handlers.sample = function (data, callback) {
     callback(406, { name: 'sampleHandler' });
 };
 
+handlers.ping = function (data, callback) {
+    callback(200);
+};
+
 handlers.notFound = function (data, callback) {
     // callback a http status code and payload object
     callback(404);
@@ -139,4 +143,5 @@ handlers.notFound = function (data, callback) {
 
 const router = {
     sample: handlers.sample,
+    ping: handlers.ping,
 };
