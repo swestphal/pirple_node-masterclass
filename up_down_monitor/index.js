@@ -55,13 +55,14 @@ const server = http.createServer(function (req, res) {
             // use status code called back by the handler, or default 200
             statusCode = typeof statusCode === 'number' ? statusCode : 200;
 
-            // use the payload called back by the handler, or default to an
+            // use the payload called back by the handler, or default to an empty object
             payload = typeof payload === 'object' ? payload : {};
 
             // convert the payload to a string
             const payloadString = JSON.stringify(payload);
 
             // return response
+            res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
             console.log(buffer);
