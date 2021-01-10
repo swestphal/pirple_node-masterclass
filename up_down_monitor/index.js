@@ -7,14 +7,16 @@ const http = require('http');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 
+const config = require('./config');
+
 // the server should respond to all requests with a string
 const server = http.createServer(function (req, res) {
     // get url and parse it
     const parsedUrl = url.parse(req.url, true);
 
     // get the path
-    var path = parsedUrl.pathname;
-    var trimmedPath = path.replace(/^\/+|\/+$/g, '');
+    const path = parsedUrl.pathname;
+    const trimmedPath = path.replace(/^\/+|\/+$/g, '');
 
     // get the http method
     const method = req.method.toLocaleLowerCase();
@@ -35,7 +37,7 @@ const server = http.createServer(function (req, res) {
         buffer += decoder.end();
 
         // choose the handler this request should go to
-        var chosenHandler =
+        const chosenHandler =
             typeof router[trimmedPath] !== 'undefined'
                 ? router[trimmedPath]
                 : handlers.notFound;
@@ -86,8 +88,14 @@ const server = http.createServer(function (req, res) {
 });
 
 // start the server, and have it listen on port 3000
-server.listen(3000, function () {
-    console.log('The server is listening on port 3000 now');
+server.listen(config.port, function () {
+    console.log(
+        'The server is listening on port ' +
+            config.port +
+            ' now in ' +
+            config.envName +
+            ' mode'
+    );
 });
 
 // define handlers
