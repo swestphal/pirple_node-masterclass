@@ -12,7 +12,6 @@ const server = http.createServer(function (req, res) {
     // get url and parse it
     const parsedUrl = url.parse(req.url, true);
 
-    console.log(parsedUrl);
     // get the path
     var path = parsedUrl.pathname;
     var trimmedPath = path.replace(/^\/+|\/+$/g, '');
@@ -35,7 +34,41 @@ const server = http.createServer(function (req, res) {
     req.on('end', function () {
         buffer += decoder.end();
 
-        // send the response
+        // choose the handler this request should go to
+        var chosenHandler =
+            typeof router[trimmedPath] !== 'undefined'
+                ? router[trimmedPath]
+                : handlers.notFound;
+
+        // construct data object to send to handler
+
+        const data = {
+            trimmedPath: trimmedPath,
+            queryStringObject: queryStringObject,
+            method: method,
+            headers: headers,
+            payload: buffer,
+        };
+
+        // route request  to handler specified in the router
+        chosenHandler(data, function (statusCode, payload) {
+            // use status code called back by the handler, or default 200
+            statusCode = typeof statusCode === 'number' ? statusCode : 200;
+
+            // use the payload called back by the handler, or default to an
+            payload = typeof payload === 'object' ? payload : {};
+
+            // convert the payload to a string
+            const payloadString = JSON.stringify(payload);
+
+            // return response
+            res.writeHead(statusCode);
+            res.end(payloadString);
+            console.log(buffer);
+            console.log('Returning this response ', statusCode, payloadString);
+        });
+
+        /*// send the response
         res.end('hello world\n');
         // log the request
         console.log(
@@ -47,7 +80,7 @@ const server = http.createServer(function (req, res) {
             queryStringObject
         );
         console.log('headers: ', headers);
-        console.log('payload ', buffer);
+        console.log('payload ', buffer);*/
     });
 });
 
@@ -55,3 +88,20 @@ const server = http.createServer(function (req, res) {
 server.listen(3000, function () {
     console.log('The server is listening on port 3000 now');
 });
+
+// define handlers
+const handlers = {};
+
+// sample handler
+handlers.sample = function (data, callback) {
+    callback(406, { name: 'sampleHandler' });
+};
+
+handlers.notFound = function (data, callback) {
+    // callback a http status code and payload object
+    callback(404);
+};
+
+const router = {
+    sample: handlers.sample,
+};
