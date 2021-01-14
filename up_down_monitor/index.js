@@ -9,6 +9,27 @@ const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 const fs = require('fs');
 
+/* var _data = require('./lib/data');
+
+_data.create('/test/', 'fileTest', { foo: 'baar' }, function (err) {
+    console.log(err);
+});
+
+_data.read('/test/', 'fileTest', function (err, data) {
+    console.log('this was the error: ', err, ' this was the data: ', data);
+});
+
+_data.read('/test/', 'fileNixTest', function (err, data) {
+    console.log('this was the error: ', err, ' this was the data: ', data);
+});
+
+_data.update('/test/', 'fileTest', { foo2: 'hello' }, function (err) {
+    console.log(err);
+});
+_data.delete('/test/', 'fileTest', function (err) {
+    console.log(err);
+});
+*/
 const config = require('./config');
 
 // instantiate the http server
@@ -104,41 +125,9 @@ const unifiedServer = function (req, res) {
             res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
-            console.log(buffer);
             console.log('Returning this response ', statusCode, payloadString);
         });
-
-        /*// send the response
-        res.end('hello world\n');
-        // log the request
-        console.log(
-            'Request received on path: ' +
-                trimmedPath +
-                ' with ' +
-                method +
-                ' and with these query string parameters: ',
-            queryStringObject
-        );
-        console.log('headers: ', headers);
-        console.log('payload ', buffer);*/
     });
-};
-
-// define handlers
-const handlers = {};
-
-// sample handler
-handlers.sample = function (data, callback) {
-    callback(406, { name: 'sampleHandler' });
-};
-
-handlers.ping = function (data, callback) {
-    callback(200);
-};
-
-handlers.notFound = function (data, callback) {
-    // callback a http status code and payload object
-    callback(404);
 };
 
 const router = {
