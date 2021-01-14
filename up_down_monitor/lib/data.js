@@ -2,21 +2,22 @@
 
 // dependencies
 
-var fs = require('fs');
-var path = require('path');
-
+const fs = require('fs');
+const path = require('path');
+const helpers = require('./helpers');
 // container for the module to be exported
 
-var lib = {};
+const lib = {};
 
 // base directory of the data folder
-lib.baseDir = path.join(__dirname, '/../.data');
+
+lib.baseDir = path.join(__dirname, '/../.data/');
 // write data to a file
 
 lib.create = function (dir, file, data, callback) {
     // open file for writing
     fs.open(
-        lib.baseDir + dir + '' + file + '.json',
+        lib.baseDir + dir + '/' + file + '.json',
         'wx',
         function (err, fileDescriptor) {
             if (!err && fileDescriptor) {
@@ -48,7 +49,12 @@ lib.read = function (dir, file, callback) {
         lib.baseDir + dir + '/' + file + '.json',
         'utf8',
         function (err, data) {
-            callback(err, data);
+            if (!err && data) {
+                const parsedData = helpers.parseJsonToObject(data);
+                callback(false, parsedData);
+            } else {
+                callback(err, data);
+            }
         }
     );
 };

@@ -8,6 +8,8 @@ const https = require('https');
 const url = require('url');
 const StringDecoder = require('string_decoder').StringDecoder;
 const fs = require('fs');
+const handlers = require('./lib/handlers');
+const helpers = require('./lib/helpers');
 
 /* var _data = require('./lib/data');
 
@@ -30,7 +32,7 @@ _data.delete('/test/', 'fileTest', function (err) {
     console.log(err);
 });
 */
-const config = require('./config');
+const config = require('./lib/config');
 
 // instantiate the http server
 const httpServer = http.createServer(function (req, res) {
@@ -87,7 +89,7 @@ const unifiedServer = function (req, res) {
 
     // get payloads, if any
     const decoder = new StringDecoder('utf-8');
-    let buffer = 'a';
+    let buffer = '';
     req.on('data', function (data) {
         buffer += decoder.write(data);
     });
@@ -101,13 +103,13 @@ const unifiedServer = function (req, res) {
                 : handlers.notFound;
 
         // construct data object to send to handler
-
+        console.log(buffer);
         const data = {
             trimmedPath: trimmedPath,
             queryStringObject: queryStringObject,
             method: method,
             headers: headers,
-            payload: buffer,
+            payload: helpers.parseJsonToObject(buffer),
         };
 
         // route request  to handler specified in the router
@@ -131,6 +133,6 @@ const unifiedServer = function (req, res) {
 };
 
 const router = {
-    sample: handlers.sample,
     ping: handlers.ping,
+    users: handlers.users,
 };
