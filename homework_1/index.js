@@ -25,7 +25,7 @@ httpServer.listen(config.httpPort, function () {
     );
 });
 
-// all the server logic for http
+// server logic for http
 const unifiedServer = function (req, res) {
     // get url and parse it
     const parsedUrl = url.parse(req.url, true);

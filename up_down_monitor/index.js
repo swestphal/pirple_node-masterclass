@@ -103,7 +103,7 @@ const unifiedServer = function (req, res) {
                 : handlers.notFound;
 
         // construct data object to send to handler
-        console.log(buffer);
+
         const data = {
             trimmedPath: trimmedPath,
             queryStringObject: queryStringObject,
@@ -127,7 +127,6 @@ const unifiedServer = function (req, res) {
             res.setHeader('Content-Type', 'application/json');
             res.writeHead(statusCode);
             res.end(payloadString);
-            console.log('Returning this response ', statusCode, payloadString);
         });
     });
 };
@@ -135,4 +134,5 @@ const unifiedServer = function (req, res) {
 const router = {
     ping: handlers.ping,
     users: handlers.users,
+    tokens: handlers.tokens,
 };
