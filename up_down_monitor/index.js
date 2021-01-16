@@ -11,27 +11,12 @@ const fs = require('fs');
 const handlers = require('./lib/handlers');
 const helpers = require('./lib/helpers');
 
-/* var _data = require('./lib/data');
 
-_data.create('/test/', 'fileTest', { foo: 'baar' }, function (err) {
-    console.log(err);
-});
+helpers.sendTwilioSms('15005550009', 'hello', function (err) {
+    console.log("this is the error ", err)
+})
 
-_data.read('/test/', 'fileTest', function (err, data) {
-    console.log('this was the error: ', err, ' this was the data: ', data);
-});
 
-_data.read('/test/', 'fileNixTest', function (err, data) {
-    console.log('this was the error: ', err, ' this was the data: ', data);
-});
-
-_data.update('/test/', 'fileTest', { foo2: 'hello' }, function (err) {
-    console.log(err);
-});
-_data.delete('/test/', 'fileTest', function (err) {
-    console.log(err);
-});
-*/
 const config = require('./lib/config');
 
 // instantiate the http server
@@ -43,10 +28,10 @@ const httpServer = http.createServer(function (req, res) {
 httpServer.listen(config.httpPort, function () {
     console.log(
         'The server is listening on port ' +
-            config.httpPort +
-            ' now in ' +
-            config.envName +
-            ' mode'
+        config.httpPort +
+        ' now in ' +
+        config.envName +
+        ' mode'
     );
 });
 
@@ -62,10 +47,10 @@ const httpsServer = https.createServer(httpsServerOptions, function (req, res) {
 httpsServer.listen(config.httpsPort, function () {
     console.log(
         'The server is listening on port ' +
-            config.httpsPort +
-            ' now in ' +
-            config.envName +
-            ' mode'
+        config.httpsPort +
+        ' now in ' +
+        config.envName +
+        ' mode'
     );
 });
 
