@@ -14,12 +14,14 @@ const environments = {
         httpsPort: 5001,
         envName: 'production',
         hashingSecret: 'thisIsASecret',
+        maxChecks: 5,
     },
     staging: {
         httpPort: 3000,
         httpsPort: 3001,
         envName: 'staging',
         hashingSecret: 'thisIsASecret',
+        maxChecks: 5,
     },
 };
 
