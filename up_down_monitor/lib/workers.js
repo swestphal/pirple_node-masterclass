@@ -11,6 +11,9 @@ var https = require('https');
 var http = require('http');
 var helpers = require('./helpers');
 var url = require('url');
+var _logs = require('./logs');
+var util = require('util');
+var debug = util.debuglog('workers')
 
 // Instantiate the worker module object
 var workers = {};
@@ -27,12 +30,12 @@ workers.gatherAllChecks = function () {
                         // Pass it to the check validator, and let that function continue the function or log the error(s) as needed
                         workers.validateCheckData(originalCheckData);
                     } else {
-                        console.log("Error reading one of the check's data: ", err);
+                        debug("Error reading one of the check's data: ", err);
                     }
                 });
             });
         } else {
-            console.log('Error: Could not find any checks to process');
+            debug('Error: Could not find any checks to process');
         }
     });
 
@@ -64,7 +67,7 @@ workers.validateCheckData = function (originalCheckData) {
         workers.performCheck(originalCheckData);
     } else {
         // If checks fail, log the error and fail silently
-        console.log("Error: one of the checks is not properly formatted. Skipping.");
+        debug("Error: one of the checks is not properly formatted. Skipping.");
     }
 };
 
@@ -143,10 +146,13 @@ workers.processCheckOutcome = function (originalCheckData, checkOutcome) {
     var alertWarranted = originalCheckData.lastChecked && originalCheckData.state !== state ? true : false;
 
     // Update the check data
+    var timeOfCheck = Date.now()
     var newCheckData = originalCheckData;
     newCheckData.state = state;
-    newCheckData.lastChecked = Date.now();
+    newCheckData.lastChecked = timeOfCheck;
 
+
+    workers.log(originalCheckData, checkOutcome, state, alertWarranted, timeOfCheck)
     // Save the updates
     _data.update('checks', newCheckData.id, newCheckData, function (err) {
         if (!err) {
@@ -154,10 +160,10 @@ workers.processCheckOutcome = function (originalCheckData, checkOutcome) {
             if (alertWarranted) {
                 workers.alertUserToStatusChange(newCheckData);
             } else {
-                console.log("Check outcome has not changed, no alert needed");
+                debug("Check outcome has not changed, no alert needed");
             }
         } else {
-            console.log("Error trying to save updates to one of the checks");
+            debug("Error trying to save updates to one of the checks");
         }
     });
 };
@@ -167,12 +173,39 @@ workers.alertUserToStatusChange = function (newCheckData) {
     var msg = 'Alert: Your check for ' + newCheckData.method.toUpperCase() + ' ' + newCheckData.protocol + '://' + newCheckData.url + ' is currently ' + newCheckData.state;
     helpers.sendTwilioSms(newCheckData.userPhone, msg, function (err) {
         if (!err) {
-            console.log("Success: User was alerted to a status change in their check, via sms: ", msg);
+            debug("Success: User was alerted to a status change in their check, via sms: ", msg);
         } else {
-            console.log("Error: Could not send sms alert to user who had a state change in their check", err);
+            debug("Error: Could not send sms alert to user who had a state change in their check", err);
         }
     });
 };
+
+workers.log = function (originalCheckData, checkOutcome, state, alertWarranted, timeOfCheck) {
+    // form the log data
+    var logData = {
+        'check': originalCheckData,
+        'outcome': checkOutcome,
+        'state': state,
+        'time': timeOfCheck
+    }
+    // convert data to string
+    var logString = JSON.stringify(logData);
+
+    // determin the name of log file
+    var logFileName = originalCheckData.id;
+    // append log string to file we want to write to
+
+    // append th elog string to the file
+    _logs.append(logFileName, logString, function (err) {
+        if (!err) {
+            debug("Logging to file succeeded");
+        } else {
+            debug("logging to file failed")
+        }
+    })
+
+}
+
 
 // Timer to execute the worker-process once per minute
 workers.loop = function () {
@@ -181,14 +214,70 @@ workers.loop = function () {
     }, 1000 * 60);
 };
 
+// Rotate (compress log files)
+workers.rotateLogs = function () {
+    // list all the (non compressed) log files
+    _logs.list(false, function (err, logs) {
+        if (!err && logs && logs.length > 0) {
+            logs.forEach(function (logName) {
+                // compress data to a different file
+                var logId = logName.replace('.log', '');
+                var newFileId = logId + '-' + Date.now();
+                _logs.compress(logId, newFileId, function (err) {
+                    if (!err) {
+                        _logs.truncate(logId, function (err) {
+                            if (!err) {
+                                debug("Sucess truncating logFile")
+                            } else {
+                                debug("Error truncating logFile")
+                            }
+                        })
+                    } else {
+                        debug("Error compressing one of the log files", error)
+                    }
+                })
+            })
+        } else {
+            debug("Error: Coul not find any logs to rotate")
+        }
+    })
+}
+
+// Timer to execute the log rotation process once per day
+workers.logRotationLoop = function () {
+    setInterval(function () {
+        workers.rotateLogs();
+    }, 1000 * 60 * 60 * 24);
+};
+
+
+
 // Init script
 workers.init = function () {
+
+    // send to console in yellow
+    console.log('\x1b[33m%s\x1b[0m', 'Background workers are running');
+
+    console.log('\x1b[36m%s\x1b[0m', 'Background workers are running');
+    console.log('\x1b[31m%s\x1b[0m', 'Background workers are running');
+
+    console.log('\x1b[41m%s\x1b[0m', 'Background workers are running');
+    console.log('\x1b[36m%s\x1b[0m', 'Background workers are running');
+    console.log('\x1b[36m%s\x1b[0m', 'Background workers are running');
+
 
     // Execute all the checks immediately
     workers.gatherAllChecks();
 
     // Call the loop so the checks will execute later on
     workers.loop();
+
+    // Compress all the log immediately
+    workers.rotateLogs();
+
+    // call the compression loop so logs will be compressed later on
+    workers.logRotationLoop();
+
 };
 
 
