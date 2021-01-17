@@ -1,57 +1,53 @@
 /*
- * helpers for various tasks
+ * Helpers for various tasks
+ *
  */
 
-// dependencies
-const crypto = require('crypto');
-const config = require('./config');
-const https = require('https');
-const queryString = require('querystring');
+// Dependencies
+var config = require('./config');
+var crypto = require('crypto');
+var https = require('https');
+var querystring = require('querystring');
 
-// container for helpers
-const helpers = {};
+// Container for all the helpers
+var helpers = {};
 
+// Parse a JSON string to an object in all cases, without throwing
+helpers.parseJsonToObject = function (str) {
+    try {
+        var obj = JSON.parse(str);
+        return obj;
+    } catch (e) {
+        return {};
+    }
+};
 
-
-// create a sha256 hash
+// Create a SHA256 hash
 helpers.hash = function (str) {
-    if (typeof str === 'string' && str.length > 0) {
-        var hash = crypto
-            .createHmac('sha256', config.hashingSecret)
-            .update(str)
-            .digest('hex');
+    if (typeof (str) == 'string' && str.length > 0) {
+        var hash = crypto.createHmac('sha256', config.hashingSecret).update(str).digest('hex');
         return hash;
     } else {
         return false;
     }
 };
 
-helpers.parseJsonToObject = function (str) {
-    try {
-        const obj = JSON.parse(str);
-        return obj;
-    } catch (err) {
-        return {};
-    }
-};
-
-// create a string of random alphanumeric characters of a given length
+// Create a string of random alphanumeric characters, of a given length
 helpers.createRandomString = function (strLength) {
-    strLength =
-        typeof strLength === 'number' && strLength > 0 ? strLength : false;
+    strLength = typeof (strLength) == 'number' && strLength > 0 ? strLength : false;
     if (strLength) {
-        // define all possible characters
+        // Define all the possible characters that could go into a string
         var possibleCharacters = 'abcdefghijklmnopqrstuvwxyz0123456789';
 
+        // Start the final string
         var str = '';
-        for (let i = 1; i <= strLength; i++) {
-            // get character
-            const randomCharacter = possibleCharacters.charAt(
-                Math.floor(Math.random() * possibleCharacters.length)
-            );
-            // append to final string
+        for (i = 1; i <= strLength; i++) {
+            // Get a random charactert from the possibleCharacters string
+            var randomCharacter = possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
+            // Append this character to the string
             str += randomCharacter;
         }
+        // Return the final string
         return str;
     } else {
         return false;
@@ -59,20 +55,22 @@ helpers.createRandomString = function (strLength) {
 };
 
 helpers.sendTwilioSms = function (phone, msg, callback) {
-    phone = typeof (phone) === 'string' && phone.trim().length > 5 ? phone.trim() : false;
-    msg = typeof (msg) === 'string' && msg.trim().length <= 1600 ? msg.trim() : false;
+    // Validate parameters
+    phone = typeof (phone) == 'string' && phone.trim().length >= 5 ? phone.trim() : false;
+    msg = typeof (msg) == 'string' && msg.trim().length > 0 && msg.trim().length <= 1600 ? msg.trim() : false;
     if (phone && msg) {
-        // configure the request payload
-        const payload = {
+
+        // Configure the request payload
+        var payload = {
             'From': config.twilio.fromPhone,
             'To': '+1' + phone,
             'Body': msg
-        }
-        // stringify payload
-        const stringPayload = queryString.stringify(payload);
+        };
+        var stringPayload = querystring.stringify(payload);
 
-        // configure the request details
-        const requestDetails = {
+
+        // Configure the request details
+        var requestDetails = {
             'protocol': 'https:',
             'hostname': 'api.twilio.com',
             'method': 'POST',
@@ -82,32 +80,36 @@ helpers.sendTwilioSms = function (phone, msg, callback) {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Length': Buffer.byteLength(stringPayload)
             }
-        }
-        // instantiate the request object
-        var req = https.request(requestDetails, function (res) {
-            // grab status of the sent request
-            const status = res.statusCode
-            // callback successfully if request went through
-            if (status === 200 || status === 201) {
-                callback(false)
-            } else {
-                callback('Status code returned was ' + status)
-            }
-        })
+        };
 
-        // bind to the error event so it doesnt get thrown
+        // Instantiate the request object
+        var req = https.request(requestDetails, function (res) {
+            // Grab the status of the sent request
+            var status = res.statusCode;
+            // Callback successfully if the request went through
+            if (status == 200 || status == 201) {
+                callback(false);
+            } else {
+                callback('Status code returned was ' + status);
+            }
+        });
+
+        // Bind to the error event so it doesn't get thrown
         req.on('error', function (e) {
-            callback(e)
-        })
-        // add the payload
+            callback(e);
+        });
+
+        // Add the payload
         req.write(stringPayload);
 
-        // end the request
+        // End the request
         req.end();
-    } else {
-        callback('Given parameters were missing or invalid')
-    }
-}
 
-// export the module
+    } else {
+        callback('Given parameters were missing or invalid');
+    }
+};
+
+
+// Export the module
 module.exports = helpers;
